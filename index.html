@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Freaker126 Neon Space Wars</title>
     <style>
         * {
@@ -22,16 +22,20 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            min-height: -webkit-fill-available;
         }
         #game-container {
             position: relative;
             width: 100vw;
             height: 100vh;
-            max-width: 600px;
-            max-height: 900px;
+            height: -webkit-fill-available;
+            max-width: 500px;
+            max-height: 82vh;
             background-color: #000;
             box-shadow: 0 0 20px #00ffff;
             overflow: hidden;
+            border-radius: 8px;
+            border: 2px solid #00ffff;
         }
         canvas {
             display: block;
@@ -40,15 +44,15 @@
         }
         .ui-layer {
             position: absolute;
-            top: 10px;
+            top: 8px;
             left: 10px;
             right: 10px;
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px;
             pointer-events: none;
             font-weight: bold;
-            font-size: 13px;
+            font-size: clamp(11px, 2.5vw, 13px);
             z-index: 5;
             text-shadow: 0 0 8px currentColor;
         }
@@ -64,7 +68,7 @@
         
         .boss-hp-container {
             width: 100%;
-            height: 12px;
+            height: 10px;
             background: rgba(255, 0, 127, 0.2);
             border: 1px solid #ff007f;
             box-shadow: 0 0 8px #ff007f;
@@ -80,31 +84,32 @@
         }
         .boss-hp-text {
             position: absolute;
-            top: -1px;
+            top: -2px;
             width: 100%;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             color: #fff;
             text-shadow: 0 0 4px #000;
         }
 
         .top-btn {
             position: absolute;
-            top: 50px;
+            top: 40px;
             right: 10px;
             z-index: 10;
             background: rgba(255, 0, 127, 0.2);
             border: 1px solid #ff007f;
             color: #fff;
-            padding: 4px 8px;
+            padding: 3px 6px;
             font-family: 'Courier New', monospace;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
             cursor: pointer;
             text-shadow: 0 0 5px #ff007f;
             box-shadow: 0 0 5px #ff007f;
         }
         
+        /* Mobile Touch Controls Layer adjusted for safe areas */
         .controls-layer {
             position: absolute;
             top: 0;
@@ -113,50 +118,52 @@
             height: 100%;
             pointer-events: none;
             z-index: 4;
+            padding-bottom: env(safe-area-inset-bottom, 10px);
         }
         .left-touch-zone {
             position: absolute;
-            bottom: 20px;
-            left: 15px;
+            bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+            left: 12px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 10px;
             pointer-events: auto;
         }
         .touch-btn {
-            width: 65px;
-            height: 65px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(2px);
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
             border: 2px solid;
             touch-action: none;
         }
         .btn-shoot {
             border-color: #39ff14;
             color: #39ff14;
-            box-shadow: 0 0 10px rgba(57, 255, 20, 0.4);
+            box-shadow: 0 0 8px rgba(57, 255, 20, 0.4);
         }
         .btn-shoot:active { background: rgba(57, 255, 20, 0.4); }
         .btn-bomb {
             border-color: #ff007f;
             color: #ff007f;
-            box-shadow: 0 0 10px rgba(255, 0, 127, 0.4);
+            box-shadow: 0 0 8px rgba(255, 0, 127, 0.4);
         }
         .btn-bomb:active { background: rgba(255, 0, 127, 0.4); }
+        
         .right-touch-zone {
             position: absolute;
-            bottom: 25px;
-            right: 25px;
-            width: 120px;
-            height: 120px;
+            bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+            right: 12px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            background: rgba(0, 255, 255, 0.05);
+            background: rgba(0, 255, 255, 0.08);
             border: 2px dashed rgba(0, 255, 255, 0.3);
             pointer-events: auto;
             touch-action: none;
@@ -165,25 +172,51 @@
             align-items: center;
         }
         .joypad-stick {
-            width: 45px;
-            height: 45px;
+            width: 38px;
+            height: 38px;
             border-radius: 50%;
-            background: rgba(0, 255, 255, 0.25);
+            background: rgba(0, 255, 255, 0.3);
             border: 2px solid #00ffff;
-            box-shadow: 0 0 10px #00ffff;
+            box-shadow: 0 0 8px #00ffff;
             pointer-events: none;
             transform: translate(0px, 0px);
+        }
+
+        /* Landscape Orientation Overlay */
+        #orientation-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #050508;
+            color: #00ffff;
+            z-index: 100;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            font-size: 16px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+
+        @media screen and (orientation: landscape) and (max-height: 500px) {
+            #orientation-overlay { display: flex; }
         }
     </style>
 </head>
 <body>
 
+<div id="orientation-overlay">
+    <div>📱 PLEASE ROTATE YOUR PHONE</div>
+    <div style="font-size: 12px; margin-top: 10px; color: #39ff14;">VERTICAL PORTRAIT MODE IS RECOMMENDED FOR NEON SPACE WARS</div>
+</div>
+
 <div id="game-container">
     <div class="ui-layer">
         <div class="ui-top-row">
             <div class="ui-score">SCORE: <span id="scoreVal">0</span></div>
-            <div class="ui-level">LEVEL: <span id="levelVal">1</span></div>
-            <div class="ui-high">HIGH: <span id="highVal">0</span></div>
+            <div class="ui-level">LVL: <span id="levelVal">1</span></div>
+            <div class="ui-high">HI: <span id="highVal">0</span></div>
             <div class="ui-bombs">BOMBS: <span id="bombVal">1</span></div>
         </div>
         <div class="boss-hp-container" id="bossBar">
@@ -242,8 +275,8 @@ let stars = [];
 
 for (let i = 0; i < 60; i++) {
     stars.push({
-        x: Math.random() * 600,
-        y: Math.random() * 900,
+        x: Math.random() * 500,
+        y: Math.random() * 800,
         size: Math.random() * 2 + 0.5,
         speed: Math.random() * 1.5 + 0.5
     });
@@ -418,9 +451,9 @@ canvas.addEventListener("touchstart", (e) => {
 function createPlayer() {
     return {
         x: canvas.width / 2,
-        y: canvas.height - 100,
-        radius: 18,
-        speed: 5.5,
+        y: canvas.height - 80,
+        radius: 16,
+        speed: 5.0,
         weaponLevel: 1,
         bombs: 1,
         shootCooldown: 0
@@ -436,23 +469,23 @@ function shootBullet() {
     if (lvl === 1) {
         bullets.push({ x: player.x, y: player.y - 15, vx: 0, vy: -13, color: "#00ffff", size: 4 });
     } else if (lvl === 2) {
-        bullets.push({ x: player.x - 10, y: player.y - 10, vx: 0, vy: -13, color: "#39ff14", size: 4 });
-        bullets.push({ x: player.x + 10, y: player.y - 10, vx: 0, vy: -13, color: "#39ff14", size: 4 });
+        bullets.push({ x: player.x - 8, y: player.y - 10, vx: 0, vy: -13, color: "#39ff14", size: 4 });
+        bullets.push({ x: player.x + 8, y: player.y - 10, vx: 0, vy: -13, color: "#39ff14", size: 4 });
     } else if (lvl === 3) {
         bullets.push({ x: player.x, y: player.y - 15, vx: 0, vy: -13, color: "#ff007f", size: 5 });
-        bullets.push({ x: player.x - 8, y: player.y - 10, vx: -3, vy: -12, color: "#ff007f", size: 5 });
-        bullets.push({ x: player.x + 8, y: player.y - 10, vx: 3, vy: -12, color: "#ff007f", size: 5 });
+        bullets.push({ x: player.x - 8, y: player.y - 10, vx: -2.5, vy: -12, color: "#ff007f", size: 5 });
+        bullets.push({ x: player.x + 8, y: player.y - 10, vx: 2.5, vy: -12, color: "#ff007f", size: 5 });
     } else if (lvl === 4) {
-        bullets.push({ x: player.x - 12, y: player.y - 10, vx: -1, vy: -13, color: "#ffff00", size: 5 });
-        bullets.push({ x: player.x - 4, y: player.y - 15, vx: 0, vy: -14, color: "#ffff00", size: 5 });
-        bullets.push({ x: player.x + 4, y: player.y - 15, vx: 0, vy: -14, color: "#ffff00", size: 5 });
-        bullets.push({ x: player.x + 12, y: player.y - 10, vx: 1, vy: -13, color: "#ffff00", size: 5 });
+        bullets.push({ x: player.x - 10, y: player.y - 10, vx: -1, vy: -13, color: "#ffff00", size: 5 });
+        bullets.push({ x: player.x - 3, y: player.y - 15, vx: 0, vy: -14, color: "#ffff00", size: 5 });
+        bullets.push({ x: player.x + 3, y: player.y - 15, vx: 0, vy: -14, color: "#ffff00", size: 5 });
+        bullets.push({ x: player.x + 10, y: player.y - 10, vx: 1, vy: -13, color: "#ffff00", size: 5 });
     } else {
         bullets.push({ x: player.x, y: player.y - 15, vx: 0, vy: -15, color: "#a800ff", size: 6 });
-        bullets.push({ x: player.x - 8, y: player.y - 12, vx: -2.5, vy: -14, color: "#a800ff", size: 6 });
-        bullets.push({ x: player.x + 8, y: player.y - 12, vx: 2.5, vy: -14, color: "#a800ff", size: 6 });
-        bullets.push({ x: player.x - 14, y: player.y - 8, vx: -5, vy: -12, color: "#a800ff", size: 6 });
-        bullets.push({ x: player.x + 14, y: player.y - 8, vx: 5, vy: -12, color: "#a800ff", size: 6 });
+        bullets.push({ x: player.x - 8, y: player.y - 12, vx: -2, vy: -14, color: "#a800ff", size: 6 });
+        bullets.push({ x: player.x + 8, y: player.y - 12, vx: 2, vy: -14, color: "#a800ff", size: 6 });
+        bullets.push({ x: player.x - 12, y: player.y - 8, vx: -4, vy: -12, color: "#a800ff", size: 6 });
+        bullets.push({ x: player.x + 12, y: player.y - 8, vx: 4, vy: -12, color: "#a800ff", size: 6 });
     }
 
     player.shootCooldown = lvl >= 4 ? 9 : 11;
@@ -487,14 +520,14 @@ function spawnBoss() {
     boss = {
         x: canvas.width / 2,
         y: -80,
-        targetY: 100,
-        radius: 45,
+        targetY: 80,
+        radius: 38,
         hp: maxHp,
         maxHp: maxHp,
         color: waveLevel % 2 === 1 ? "#ff007f" : "#a800ff",
         vx: 2 + (waveLevel * 0.4),
         shootTimer: 0,
-        shootRate: Math.max(45, 90 - waveLevel * 10) // Stage 1 Boss fires much slower
+        shootRate: Math.max(45, 90 - waveLevel * 10)
     };
     document.getElementById("bossBar").style.display = "block";
     updateBossBar();
@@ -514,7 +547,7 @@ function bossShoot() {
 
     for (let i = 0; i < count; i++) {
         let angle = baseAngle - (spread / 2) + (spread / Math.max(1, count - 1)) * i;
-        let speed = 3.2 + waveLevel * 0.3; // Slower boss projectiles on Stage 1
+        let speed = 3.0 + waveLevel * 0.3;
         enemyBullets.push({
             x: boss.x,
             y: boss.y + boss.radius,
@@ -528,7 +561,7 @@ function bossShoot() {
 function enemyShoot(e) {
     playSound('enemyshoot');
     let angle = Math.atan2(player.y - e.y, player.x - e.x);
-    let speed = 2.8 + waveLevel * 0.2; // Moderated alien bullet speed
+    let speed = 2.6 + waveLevel * 0.2;
     enemyBullets.push({
         x: e.x,
         y: e.y + e.radius,
@@ -560,29 +593,27 @@ function spawnEnemy() {
 
     const types = ['circle', 'square', 'star', 'rect', 'kamikaze'];
     let type = types[Math.floor(Math.random() * (waveLevel > 2 ? 5 : 3))];
-    let radius = Math.random() * 8 + 14;
+    let radius = Math.random() * 6 + 12;
     let x = Math.random() * (canvas.width - radius * 2) + radius;
 
     let speed = Math.random() * (1.0 + waveLevel * 0.2) + 0.8;
     let color = "#00ffff";
     let hp = 1;
     let points = 100;
-    
-    // Balanced early fire rates (higher numbers = slower firing)
-    let shootRate = 180 - (waveLevel * 20); 
+    let shootRate = 180 - (waveLevel * 20);
 
     if (type === 'square') { color = "#ff007f"; hp = 2; points = 200; shootRate = 160; }
     else if (type === 'star') { color = "#ffff00"; hp = 1; points = 150; speed *= 1.2; shootRate = 170; }
-    else if (type === 'rect') { color = "#a800ff"; hp = 3; points = 300; radius = 22; shootRate = 140; }
+    else if (type === 'rect') { color = "#a800ff"; hp = 3; points = 300; radius = 18; shootRate = 140; }
     else if (type === 'kamikaze') { color = "#ff3300"; hp = 1; points = 250; speed *= 1.5; shootRate = 0; }
 
-    enemies.push({ x, y: -30, radius, type, speed, color, hp, points, shootRate, shootTimer: Math.floor(Math.random() * 60) });
+    enemies.push({ x, y: -20, radius, type, speed, color, hp, points, shootRate, shootTimer: Math.floor(Math.random() * 60) });
 }
 
 function spawnLoot(x, y) {
     const types = ['weapon', 'bomb'];
     let type = types[Math.random() < 0.80 ? 0 : 1];
-    loots.push({ x, y, type, radius: 12, vy: 1.5 });
+    loots.push({ x, y, type, radius: 10, vy: 1.5 });
 }
 
 function createExplosion(x, y, color, count = 12) {
@@ -717,8 +748,7 @@ function update() {
             }
         }
     } else {
-        // Reduced active enemy limit on Stage 1 (max 4 on screen)
-        let maxEnemiesOnScreen = Math.min(6, 3 + waveLevel);
+        let maxEnemiesOnScreen = Math.min(5, 3 + waveLevel);
         if (Math.random() < 0.025 && enemies.length < maxEnemiesOnScreen) spawnEnemy();
     }
 
@@ -761,7 +791,7 @@ function update() {
                     waveKills++;
                     document.getElementById("scoreVal").innerText = score;
 
-                    if (Math.random() < 0.25) spawnLoot(e.x, e.y); // Higher loot drop rate on early kills
+                    if (Math.random() < 0.25) spawnLoot(e.x, e.y);
                     enemies.splice(eIdx, 1);
                     break;
                 }
@@ -821,42 +851,42 @@ function render() {
     });
 
     if (gameState === "START") {
-        drawGlowText("FREAKER126 NEON SPACE WARS", canvas.width / 2, canvas.height / 2 - 60, "#00ffff", "22px");
-        drawGlowText("RIGHT THUMB: JOYPAD TO MOVE", canvas.width / 2, canvas.height / 2 - 10, "#39ff14", "14px");
-        drawGlowText("LEFT THUMB: FIRE / BOMB", canvas.width / 2, canvas.height / 2 + 20, "#39ff14", "14px");
-        drawGlowText("KEYS: WASD / ARROWS + SPACE", canvas.width / 2, canvas.height / 2 + 50, "#ffff00", "13px");
-        drawGlowText("TAP TO START", canvas.width / 2, canvas.height / 2 + 100, "#ff007f", "20px");
+        drawGlowText("FREAKER126 NEON SPACE WARS", canvas.width / 2, canvas.height / 2 - 50, "#00ffff", "18px");
+        drawGlowText("RIGHT THUMB: JOYPAD TO MOVE", canvas.width / 2, canvas.height / 2 - 10, "#39ff14", "12px");
+        drawGlowText("LEFT THUMB: FIRE / BOMB", canvas.width / 2, canvas.height / 2 + 15, "#39ff14", "12px");
+        drawGlowText("KEYS: WASD / ARROWS + SPACE", canvas.width / 2, canvas.height / 2 + 40, "#ffff00", "11px");
+        drawGlowText("TAP TO START", canvas.width / 2, canvas.height / 2 + 80, "#ff007f", "18px");
         return;
     }
 
     if (gameState === "GAMEOVER") {
-        drawGlowText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40, "#ff007f", "36px");
-        drawGlowText(`FINAL SCORE: ${score}`, canvas.width / 2, canvas.height / 2 + 10, "#00ffff", "20px");
-        drawGlowText("TAP TO REMATCH", canvas.width / 2, canvas.height / 2 + 70, "#39ff14", "18px");
+        drawGlowText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40, "#ff007f", "30px");
+        drawGlowText(`FINAL SCORE: ${score}`, canvas.width / 2, canvas.height / 2 + 10, "#00ffff", "18px");
+        drawGlowText("TAP TO REMATCH", canvas.width / 2, canvas.height / 2 + 60, "#39ff14", "16px");
         return;
     }
 
     if (warningTimer > 0 && Math.floor(warningTimer / 10) % 2 === 0) {
-        drawGlowText("WARNING: BOSS INCOMING!", canvas.width / 2, canvas.height / 2, "#ff007f", "24px");
+        drawGlowText("WARNING: BOSS INCOMING!", canvas.width / 2, canvas.height / 2, "#ff007f", "20px");
     }
 
     bullets.forEach(b => {
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = b.color;
         ctx.fillStyle = b.color;
-        ctx.fillRect(b.x - (b.size / 2), b.y - 6, b.size, 12);
+        ctx.fillRect(b.x - (b.size / 2), b.y - 6, b.size, 10);
     });
 
     enemyBullets.forEach(eb => {
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
         ctx.shadowColor = eb.color;
         ctx.fillStyle = eb.color;
         ctx.beginPath();
-        ctx.arc(eb.x, eb.y, 5, 0, Math.PI * 2);
+        ctx.arc(eb.x, eb.y, 4, 0, Math.PI * 2);
         ctx.fill();
     });
 
-    ctx.shadowBlur = 15;
+    ctx.shadowBlur = 12;
     ctx.shadowColor = "#00ffff";
     ctx.strokeStyle = "#00ffff";
     ctx.lineWidth = 2;
@@ -864,17 +894,17 @@ function render() {
     ctx.beginPath();
     ctx.moveTo(player.x, player.y - player.radius);
     ctx.lineTo(player.x - player.radius, player.y + player.radius);
-    ctx.lineTo(player.x, player.y + player.radius - 6);
+    ctx.lineTo(player.x, player.y + player.radius - 5);
     ctx.lineTo(player.x + player.radius, player.y + player.radius);
     ctx.closePath();
     ctx.stroke();
 
     ctx.shadowColor = "#ff007f";
     ctx.fillStyle = "#ff007f";
-    ctx.fillRect(player.x - 4, player.y + player.radius, 8, Math.random() * 8 + 4);
+    ctx.fillRect(player.x - 3, player.y + player.radius, 6, Math.random() * 6 + 3);
 
     if (boss) {
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 18;
         ctx.shadowColor = boss.color;
         ctx.strokeStyle = boss.color;
         ctx.lineWidth = 3;
@@ -892,12 +922,12 @@ function render() {
 
         ctx.fillStyle = boss.color;
         ctx.beginPath();
-        ctx.arc(boss.x, boss.y, 16, 0, Math.PI * 2);
+        ctx.arc(boss.x, boss.y, 14, 0, Math.PI * 2);
         ctx.fill();
     }
 
     enemies.forEach(e => {
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 10;
         ctx.shadowColor = e.color;
         ctx.strokeStyle = e.color;
         ctx.lineWidth = 2;
@@ -924,7 +954,7 @@ function render() {
     });
 
     loots.forEach(l => {
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 8;
         let color = l.type === 'weapon' ? "#39ff14" : "#ff007f";
         ctx.shadowColor = color;
         ctx.fillStyle = color;
@@ -932,21 +962,21 @@ function render() {
         ctx.arc(l.x, l.y, l.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.fillStyle = "#000";
-        ctx.font = "bold 10px monospace";
+        ctx.font = "bold 9px monospace";
         ctx.textAlign = "center";
         ctx.fillText(l.type === 'weapon' ? "W" : "B", l.x, l.y + 3);
     });
 
     particles.forEach(p => {
-        ctx.shadowBlur = 6;
+        ctx.shadowBlur = 5;
         ctx.shadowColor = p.color;
         ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, 3, 3);
+        ctx.fillRect(p.x, p.y, 2, 2);
     });
 }
 
-function drawGlowText(text, x, y, color, size = "20px") {
-    ctx.shadowBlur = 10;
+function drawGlowText(text, x, y, color, size = "18px") {
+    ctx.shadowBlur = 8;
     ctx.shadowColor = color;
     ctx.fillStyle = color;
     ctx.font = `bold ${size} 'Courier New'`;
