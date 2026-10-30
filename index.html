@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Freaker126 Neon Space Wars</title>
     <style>
         * {
@@ -10,9 +10,11 @@
             user-select: none;
             -webkit-user-select: none;
         }
-        body {
+        html, body {
             margin: 0;
             padding: 0;
+            width: 100%;
+            height: 100%;
             background-color: #050508;
             color: #fff;
             font-family: 'Courier New', Courier, monospace;
@@ -21,16 +23,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            min-height: -webkit-fill-available;
         }
         #game-container {
             position: relative;
-            width: 100vw;
-            height: 100vh;
-            height: -webkit-fill-available;
-            max-width: 500px;
-            max-height: 82vh;
+            width: 95vw;
+            height: 70vh;
+            max-width: 450px;
+            max-height: 650px;
             background-color: #000;
             box-shadow: 0 0 20px #00ffff;
             overflow: hidden;
@@ -52,7 +51,7 @@
             gap: 4px;
             pointer-events: none;
             font-weight: bold;
-            font-size: clamp(11px, 2.5vw, 13px);
+            font-size: 12px;
             z-index: 5;
             text-shadow: 0 0 8px currentColor;
         }
@@ -94,7 +93,7 @@
 
         .top-btn {
             position: absolute;
-            top: 40px;
+            top: 38px;
             right: 10px;
             z-index: 10;
             background: rgba(255, 0, 127, 0.2);
@@ -109,7 +108,7 @@
             box-shadow: 0 0 5px #ff007f;
         }
         
-        /* Mobile Touch Controls Layer adjusted for safe areas */
+        /* Touch Controls directly inside the canvas box */
         .controls-layer {
             position: absolute;
             top: 0;
@@ -118,11 +117,10 @@
             height: 100%;
             pointer-events: none;
             z-index: 4;
-            padding-bottom: env(safe-area-inset-bottom, 10px);
         }
         .left-touch-zone {
             position: absolute;
-            bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+            bottom: 15px;
             left: 12px;
             display: flex;
             flex-direction: column;
@@ -130,16 +128,16 @@
             pointer-events: auto;
         }
         .touch-btn {
-            width: 52px;
-            height: 52px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(2px);
             display: flex;
             justify-content: center;
             align-items: center;
             font-weight: bold;
-            font-size: 11px;
+            font-size: 10px;
             border: 2px solid;
             touch-action: none;
         }
@@ -158,13 +156,13 @@
         
         .right-touch-zone {
             position: absolute;
-            bottom: calc(15px + env(safe-area-inset-bottom, 0px));
+            bottom: 15px;
             right: 12px;
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            background: rgba(0, 255, 255, 0.08);
-            border: 2px dashed rgba(0, 255, 255, 0.3);
+            background: rgba(0, 255, 255, 0.12);
+            border: 2px dashed rgba(0, 255, 255, 0.4);
             pointer-events: auto;
             touch-action: none;
             display: flex;
@@ -172,44 +170,18 @@
             align-items: center;
         }
         .joypad-stick {
-            width: 38px;
-            height: 38px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
-            background: rgba(0, 255, 255, 0.3);
+            background: rgba(0, 255, 255, 0.4);
             border: 2px solid #00ffff;
             box-shadow: 0 0 8px #00ffff;
             pointer-events: none;
             transform: translate(0px, 0px);
         }
-
-        /* Landscape Orientation Overlay */
-        #orientation-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: #050508;
-            color: #00ffff;
-            z-index: 100;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            font-size: 16px;
-            text-shadow: 0 0 10px #00ffff;
-        }
-
-        @media screen and (orientation: landscape) and (max-height: 500px) {
-            #orientation-overlay { display: flex; }
-        }
     </style>
 </head>
 <body>
-
-<div id="orientation-overlay">
-    <div>📱 PLEASE ROTATE YOUR PHONE</div>
-    <div style="font-size: 12px; margin-top: 10px; color: #39ff14;">VERTICAL PORTRAIT MODE IS RECOMMENDED FOR NEON SPACE WARS</div>
-</div>
 
 <div id="game-container">
     <div class="ui-layer">
@@ -451,8 +423,8 @@ canvas.addEventListener("touchstart", (e) => {
 function createPlayer() {
     return {
         x: canvas.width / 2,
-        y: canvas.height - 80,
-        radius: 16,
+        y: canvas.height - 70,
+        radius: 14,
         speed: 5.0,
         weaponLevel: 1,
         bombs: 1,
@@ -521,7 +493,7 @@ function spawnBoss() {
         x: canvas.width / 2,
         y: -80,
         targetY: 80,
-        radius: 38,
+        radius: 35,
         hp: maxHp,
         maxHp: maxHp,
         color: waveLevel % 2 === 1 ? "#ff007f" : "#a800ff",
@@ -851,23 +823,23 @@ function render() {
     });
 
     if (gameState === "START") {
-        drawGlowText("FREAKER126 NEON SPACE WARS", canvas.width / 2, canvas.height / 2 - 50, "#00ffff", "18px");
-        drawGlowText("RIGHT THUMB: JOYPAD TO MOVE", canvas.width / 2, canvas.height / 2 - 10, "#39ff14", "12px");
-        drawGlowText("LEFT THUMB: FIRE / BOMB", canvas.width / 2, canvas.height / 2 + 15, "#39ff14", "12px");
-        drawGlowText("KEYS: WASD / ARROWS + SPACE", canvas.width / 2, canvas.height / 2 + 40, "#ffff00", "11px");
-        drawGlowText("TAP TO START", canvas.width / 2, canvas.height / 2 + 80, "#ff007f", "18px");
+        drawGlowText("FREAKER126 NEON SPACE WARS", canvas.width / 2, canvas.height / 2 - 50, "#00ffff", "16px");
+        drawGlowText("RIGHT THUMB: JOYPAD TO MOVE", canvas.width / 2, canvas.height / 2 - 10, "#39ff14", "11px");
+        drawGlowText("LEFT THUMB: FIRE / BOMB", canvas.width / 2, canvas.height / 2 + 15, "#39ff14", "11px");
+        drawGlowText("KEYS: WASD / ARROWS + SPACE", canvas.width / 2, canvas.height / 2 + 40, "#ffff00", "10px");
+        drawGlowText("TAP TO START", canvas.width / 2, canvas.height / 2 + 80, "#ff007f", "16px");
         return;
     }
 
     if (gameState === "GAMEOVER") {
-        drawGlowText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40, "#ff007f", "30px");
-        drawGlowText(`FINAL SCORE: ${score}`, canvas.width / 2, canvas.height / 2 + 10, "#00ffff", "18px");
-        drawGlowText("TAP TO REMATCH", canvas.width / 2, canvas.height / 2 + 60, "#39ff14", "16px");
+        drawGlowText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40, "#ff007f", "28px");
+        drawGlowText(`FINAL SCORE: ${score}`, canvas.width / 2, canvas.height / 2 + 10, "#00ffff", "16px");
+        drawGlowText("TAP TO REMATCH", canvas.width / 2, canvas.height / 2 + 60, "#39ff14", "14px");
         return;
     }
 
     if (warningTimer > 0 && Math.floor(warningTimer / 10) % 2 === 0) {
-        drawGlowText("WARNING: BOSS INCOMING!", canvas.width / 2, canvas.height / 2, "#ff007f", "20px");
+        drawGlowText("WARNING: BOSS INCOMING!", canvas.width / 2, canvas.height / 2, "#ff007f", "18px");
     }
 
     bullets.forEach(b => {
@@ -975,7 +947,7 @@ function render() {
     });
 }
 
-function drawGlowText(text, x, y, color, size = "18px") {
+function drawGlowText(text, x, y, color, size = "16px") {
     ctx.shadowBlur = 8;
     ctx.shadowColor = color;
     ctx.fillStyle = color;
