@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Freaker126 Neon Space Wars</title>
     <style>
         * {
@@ -26,9 +26,9 @@
         }
         #game-container {
             position: relative;
-            width: 95vw;
-            height: 70vh;
-            max-width: 450px;
+            width: 96vw;
+            height: 75vh;
+            max-width: 480px;
             max-height: 650px;
             background-color: #000;
             box-shadow: 0 0 20px #00ffff;
@@ -108,7 +108,6 @@
             box-shadow: 0 0 5px #ff007f;
         }
         
-        /* Touch Controls directly inside the canvas box */
         .controls-layer {
             position: absolute;
             top: 0;
@@ -118,18 +117,20 @@
             pointer-events: none;
             z-index: 4;
         }
+
+        /* Horizontal Left Buttons (Side-by-Side Edge Placement) */
         .left-touch-zone {
             position: absolute;
-            bottom: 15px;
-            left: 12px;
+            bottom: 10px;
+            left: 10px;
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            gap: 12px;
             pointer-events: auto;
         }
         .touch-btn {
-            width: 46px;
-            height: 46px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(2px);
@@ -154,24 +155,32 @@
         }
         .btn-bomb:active { background: rgba(255, 0, 127, 0.4); }
         
+        /* Floating Dynamic Joypad */
         .right-touch-zone {
             position: absolute;
-            bottom: 15px;
-            right: 12px;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            pointer-events: auto;
+            touch-action: none;
+        }
+        #floatingJoypad {
+            position: absolute;
             width: 80px;
             height: 80px;
             border-radius: 50%;
             background: rgba(0, 255, 255, 0.12);
-            border: 2px dashed rgba(0, 255, 255, 0.4);
-            pointer-events: auto;
-            touch-action: none;
-            display: flex;
+            border: 2px dashed rgba(0, 255, 255, 0.5);
+            display: none;
             justify-content: center;
             align-items: center;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
         }
         .joypad-stick {
-            width: 30px;
-            height: 30px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             background: rgba(0, 255, 255, 0.4);
             border: 2px solid #00ffff;
@@ -202,11 +211,14 @@
     <canvas id="spaceCanvas"></canvas>
 
     <div class="controls-layer">
+        <!-- Horizontal Edge Action Buttons -->
         <div class="left-touch-zone">
             <div class="touch-btn btn-bomb" id="touchBomb">BOMB</div>
             <div class="touch-btn btn-shoot" id="touchShoot">FIRE</div>
         </div>
-        <div class="right-touch-zone" id="joypadZone">
+        <!-- Right Zone for Floating Joypad -->
+        <div class="right-touch-zone" id="joypadZone"></div>
+        <div id="floatingJoypad">
             <div class="joypad-stick" id="joystick"></div>
         </div>
     </div>
@@ -364,30 +376,44 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("keyup", (e) => { keys[e.key.toLowerCase()] = false; });
 
+/* Dynamic Floating Joypad Logic */
 const joypadZone = document.getElementById("joypadZone");
+const floatingJoypad = document.getElementById("floatingJoypad");
 const joystick = document.getElementById("joystick");
+let joyCenter = { x: 0, y: 0 };
 
-joypadZone.addEventListener("touchstart", handleJoyTouch, { passive: false });
-joypadZone.addEventListener("touchmove", handleJoyTouch, { passive: false });
-joypadZone.addEventListener("touchend", () => {
+joypadZone.addEventListener("touchstart", (e) => {
+    e.preventDefault();
+    initAudio();
+    if (gameState !== "PLAYING") { startGame(); return; }
+
+    let touch = e.touches[0];
+    let rect = container.getBoundingClientRect();
+    let touchX = touch.clientX - rect.left;
+    let touchY = touch.clientY - rect.top;
+
+    joyCenter = { x: touchX, y: touchY };
+    floatingJoypad.style.left = `${touchX}px`;
+    floatingJoypad.style.top = `${touchY}px`;
+    floatingJoypad.style.display = "flex";
+
     joypadState = { x: 0, y: 0 };
     joystick.style.transform = `translate(0px, 0px)`;
 }, { passive: false });
 
-function handleJoyTouch(e) {
+joypadZone.addEventListener("touchmove", (e) => {
     e.preventDefault();
-    initAudio();
-    if (gameState !== "PLAYING") { startGame(); return; }
-    
-    let rect = joypadZone.getBoundingClientRect();
-    let touch = e.touches[0];
-    let centerX = rect.left + rect.width / 2;
-    let centerY = rect.top + rect.height / 2;
+    if (gameState !== "PLAYING") return;
 
-    let deltaX = touch.clientX - centerX;
-    let deltaY = touch.clientY - centerY;
+    let touch = e.touches[0];
+    let rect = container.getBoundingClientRect();
+    let currentX = touch.clientX - rect.left;
+    let currentY = touch.clientY - rect.top;
+
+    let deltaX = currentX - joyCenter.x;
+    let deltaY = currentY - joyCenter.y;
     let distance = Math.hypot(deltaX, deltaY);
-    let maxRadius = rect.width / 2;
+    let maxRadius = 40;
 
     if (distance > maxRadius) {
         deltaX = (deltaX / distance) * maxRadius;
@@ -397,7 +423,13 @@ function handleJoyTouch(e) {
     joypadState.x = deltaX / maxRadius;
     joypadState.y = deltaY / maxRadius;
     joystick.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
-}
+}, { passive: false });
+
+joypadZone.addEventListener("touchend", () => {
+    joypadState = { x: 0, y: 0 };
+    floatingJoypad.style.display = "none";
+    joystick.style.transform = `translate(0px, 0px)`;
+}, { passive: false });
 
 const btnShoot = document.getElementById("touchShoot");
 const btnBomb = document.getElementById("touchBomb");
@@ -805,6 +837,7 @@ function triggerGameOver() {
     createExplosion(player.x, player.y, "#00ffff", 30);
     gameState = "GAMEOVER";
     document.getElementById("bossBar").style.display = "none";
+    floatingJoypad.style.display = "none";
 
     if (score > highScore) {
         highScore = score;
@@ -824,7 +857,7 @@ function render() {
 
     if (gameState === "START") {
         drawGlowText("FREAKER126 NEON SPACE WARS", canvas.width / 2, canvas.height / 2 - 50, "#00ffff", "16px");
-        drawGlowText("RIGHT THUMB: JOYPAD TO MOVE", canvas.width / 2, canvas.height / 2 - 10, "#39ff14", "11px");
+        drawGlowText("RIGHT THUMB: TOUCH & DRAG TO MOVE", canvas.width / 2, canvas.height / 2 - 10, "#39ff14", "11px");
         drawGlowText("LEFT THUMB: FIRE / BOMB", canvas.width / 2, canvas.height / 2 + 15, "#39ff14", "11px");
         drawGlowText("KEYS: WASD / ARROWS + SPACE", canvas.width / 2, canvas.height / 2 + 40, "#ffff00", "10px");
         drawGlowText("TAP TO START", canvas.width / 2, canvas.height / 2 + 80, "#ff007f", "16px");
@@ -834,7 +867,7 @@ function render() {
     if (gameState === "GAMEOVER") {
         drawGlowText("GAME OVER", canvas.width / 2, canvas.height / 2 - 40, "#ff007f", "28px");
         drawGlowText(`FINAL SCORE: ${score}`, canvas.width / 2, canvas.height / 2 + 10, "#00ffff", "16px");
-        drawGlowText("TAP TO REMATCH", canvas.width / 2, canvas.height / 2 + 60, "#39ff14", "14px");
+        drawGlowText("TAP TO REMATCH", canvas.width / 2, canvas.height / 2 + 60, "#39ff14", "16px");
         return;
     }
 
